@@ -1,0 +1,127 @@
+﻿@model IEnumerable<Hps.HIM.WebUI.Mvc.Models.ViewModels.AlertsViewModel>
+
+@{
+    Layout = "~/Views/Shared/_BlankLayout.cshtml";
+}
+
+
+@section Styles {
+    @Styles.Render("~/Content/less/punchout")
+}
+
+@section PreScripts{
+    @Scripts.Render("~/bundles/knockout")
+    @Scripts.Render("~/bundles/punchout")
+}
+
+<h3>Alerts Partial View</h3>
+<table>
+    <tr>
+        <td>
+            <div id="punchout_grid" data-bind="poGrid: grid"></div>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <table id="EditArea" style="vertical-align:top;">
+                <tr>
+                    <td ><input type="text" class="input-large" style="border:none;font-size:14px;font-weight:bold;" data-bind="value: grid.selectedEntity().Title" /></td>
+                </tr>
+                <tr>
+                    <td><input type="text" class="input-medium" style="border:none;font-size:10px;" data-bind="value: grid.selectedEntity().Date"/>
+                        <input type="text" class="input-medium" style="border:none;font-size:10px;" data-bind="value: grid.selectedEntity().Name" /> 
+                    </td>
+                </tr>
+                <tr>
+                    <td><textarea rows="5" style="font-size:12px;" data-bind='value: grid.selectedEntity().AlertText, valueUpdate: "afterkeydown"' maxlength="1000" ></textarea></td>
+                </tr>
+                <tr>
+                    <td><br /><button class="btn btn-small" type="button">Save</button></td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+
+</table>
+
+
+@section Scripts {
+    <script language="javascript" type="text/javascript">
+
+        //strongly typed model property names
+        var idPropertyName = '@Html.DisplayNameFor(model => model.FirstOrDefault().ID)';
+        var flaggedPropertyName = '@Html.DisplayNameFor(model => model.FirstOrDefault().Flagged)';
+        var attachmentPropertyName = '@Html.DisplayNameFor(model => model.FirstOrDefault().Attachment)';
+        var namePropertyName = '@Html.DisplayNameFor(model => model.FirstOrDefault().Name)';
+        var titlePropertyName = '@Html.DisplayNameFor(model => model.FirstOrDefault().Title)';
+        var datePropertyName = '@Html.DisplayNameFor(model => model.FirstOrDefault().Date)';
+        var typePropertyName = '@Html.DisplayNameFor(model => model.FirstOrDefault().Type)';
+        var etaPropertyName = '@Html.DisplayNameFor(model => model.FirstOrDefault().ETA)';
+        var subscribedPropertyName = '@Html.DisplayNameFor(model => model.FirstOrDefault().Subscribed)';
+        var alertTextPropertyName = '@Html.DisplayNameFor(model => model.FirstOrDefault().AlertText)';
+
+        var viewModel = {
+            //data
+            data: ko.observableArray(@(new MvcHtmlString(Model.ToJSON()))),
+
+            //knockout observableArray 
+            columns: ko.observableArray([
+               { "columnName": idPropertyName, "dataType": "Int32", "displayName": idPropertyName, "isNullable": false, "isVisible": false, "isSortable": false, "propertyName": idPropertyName },
+               { "columnName": flaggedPropertyName, "dataType": "Boolean", "displayName": flaggedPropertyName, "isNullable": false, "isVisible": true, "isSortable": true, "propertyName": flaggedPropertyName },
+               { "columnName": attachmentPropertyName, "dataType": "Int32", "default": null, "displayName": attachmentPropertyName, "hasDefault": true, "isNullable": false,"isVisible": true, "isSortable": true, "propertyName": attachmentPropertyName},
+               { "columnName": namePropertyName, "characterMaxLength": 0, "dataType": "String", "default": null, "displayName": namePropertyName, "hasDefault": false, "isNullable": true, "isVisible": true, "isSortable": true, "propertyName": namePropertyName},
+               { "columnName": titlePropertyName, "characterMaxLength": 0, "dataType": "String", "default": null,"displayName": titlePropertyName, "hasDefault": true, "isNullable": true, "isVisible": true,"isSortable": true, "propertyName": titlePropertyName},
+               { "columnName": datePropertyName, "dataType": "Date", "default": null,"displayName": datePropertyName, "hasDefault": false, "isNullable": false, "isVisible": true, "isSortable": true, "propertyName": datePropertyName},
+               { "columnName": typePropertyName, "characterMaxLength": 0, "dataType": "String", "default": null, "displayName": typePropertyName,"hasDefault": false, "isNullable": true, "isVisible": true, "isSortable": true, "propertyName": typePropertyName},
+               { "columnName": etaPropertyName, "dataType": "Date", "default": null, "displayName": etaPropertyName,"hasDefault": false, "isNullable": true, "isVisible": true, "isSortable": true, "propertyName": etaPropertyName},
+               { "columnName": subscribedPropertyName, "dataType": "String", "default": null, "displayName": subscribedPropertyName, "hasDefault": false, "isNullable": false, "isVisible": true,"isSortable": true, "numericPrecision": 10, "numericScale": 0, "propertyName": subscribedPropertyName},
+               { "columnName": alertTextPropertyName, "dataType": "String", "default": null,"displayName": alertTextPropertyName, "isNullable": true, "isVisible": false,"isSortable": false, "propertyName": alertTextPropertyName}
+            ])
+        }
+
+        //------------------------------------------------------------------------------
+        // client side punchout grid
+        //------------------------------------------------------------------------------
+        var grid = new po.poGrid(ko.mapping.fromJS(viewModel.data()), viewModel.columns);
+        grid.pager = new po.dataPager(grid);  
+        grid.sorter = new po.dataSorter(grid);
+        grid.pager.rowsPerPage(10);
+
+        grid.pager.enabled(true);
+        grid.headerEnabled(true);
+        grid.footerEnabled(false);
+
+        ko.bindingHandlers.cellBound = {
+            update: function (element, valueAccessor, allBindingsAccessor) {
+                switch (valueAccessor()) {
+                    case flaggedPropertyName:
+                        $(element).text() == 'true' ? $(element).attr("class", "flagged") : $(element).attr("class", "unflagged");
+                        break;
+                    case attachmentPropertyName:
+                        $(element).text() > 0 ? $(element).attr("class", "attachment") : $(element).attr("class", "noattachment");
+                        break;
+                    default:
+                        return;
+                }
+            }
+        }
+
+        ko.bindingHandlers.headerBound = {
+            update: function (element, valueAccessor, allBindingsAccessor) {
+                switch (valueAccessor()) {
+                    case flaggedPropertyName:
+                        $(element).attr("class", "flagged");
+                        break;
+                    case attachmentPropertyName:
+                        $(element).attr("class", "attachment");
+                        break;
+                    default:
+                        return;
+                }
+            }
+        }
+
+        ko.applyBindings(grid); 
+
+     </script> 
+}
